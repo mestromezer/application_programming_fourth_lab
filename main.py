@@ -73,8 +73,8 @@ def pos(word, morth=pymorphy2.MorphAnalyzer()):
     
 def lemmatize(df: pd.DataFrame, column: str):
     text_nomalized = str()
-    #for i in range(0, len(df.index)):
-    for i in range(0, 10):
+    c = 0
+    for i in range(0, len(df.index)):
         
         text = df.iloc[i]
         text = text[column]
@@ -102,7 +102,7 @@ def lemmatize(df: pd.DataFrame, column: str):
     return lemmas_res
 
 def Top10Lemmas(lemmatized: str) -> str:
-    
+    pass
 
 if __name__ == '__main__':
     
