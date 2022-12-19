@@ -1,21 +1,25 @@
 from txt_to_csv_third import Comment, get_dataset 
 
 from matplotlib import pyplot as plt
-import numpy as np
+
+from collections import Counter
 
 from pymystem3 import Mystem #лемматизируем
 import pymorphy2 #АНАЛиз на часть речи
 
 import pandas as pd
 import os
-import string
 import re
 
-def GetDataset():
+def GetDatasetPath():
+    '''Возвращает путь до датасета
+    '''
     path = os.path.abspath("../application_programming_first_lab_and_dataset/dataset")
     return path
 
 def GetDataframe(dataset_path: str) -> pd.DataFrame:
+    '''Генерирует датафрейм
+    '''
     
     dataset = get_dataset(dataset_path)
     
@@ -59,21 +63,25 @@ def CountWords(df: pd.DataFrame, column: str) -> list:
     return count_words
 
 def ClearWords(words:str) -> str:
+    '''Возвращает список чистых слов
+    '''
     words_res = list()
     for i in range(0,len(words)):
         words[i] = words[i].strip()
         words[i] = words[i].lower()
-        words_res.append(re.sub("[^абвгдеёжзийклмнопрстуфхцчшщъыьэюяАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ]", "", words[i]))
-        
+        if words[i] != ' ': 
+            words_res.append(re.sub("[^абвгдеёжзийклмнопрстуфхцчшщъыьэюяАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ \n]", "", words[i]))
+    
     return words_res
 
 def pos(word, morth=pymorphy2.MorphAnalyzer()):
     "Return a likely part of speech for the *word*."""
     return morth.parse(word)[0].tag.POS
     
-def lemmatize(df: pd.DataFrame, column: str):
+def Lemmatize(df: pd.DataFrame, column: str):
+    ''' Лемматизирует переданный датасет
+    '''
     text_nomalized = str()
-    c = 0
     for i in range(0, len(df.index)):
         
         text = df.iloc[i]
@@ -89,7 +97,7 @@ def lemmatize(df: pd.DataFrame, column: str):
     m = Mystem()
     lemmas = m.lemmatize(text_nomalized)
     
-    functors_pos = {'INTJ', 'PRCL', 'CONJ', 'PREP'}  # function words
+    functors_pos = {'INTJ', 'PRCL', 'CONJ', 'PREP', 'NPRO'}  # function words
     
     lemmas = [lemma for lemma in lemmas if pos(lemma) not in functors_pos]
     
@@ -97,9 +105,26 @@ def lemmatize(df: pd.DataFrame, column: str):
     
     lemmas_res = [lemma for lemma in lemmas if not lemma == '' ]
     
-    print(lemmas_res)
-    
     return lemmas_res
+    
+def LemmalizeClass(df: pd.DataFrame, column: str, mark: str) -> str:
+    
+    new_df = FilterClass(df, "mark", mark)
+    
+    lemmas = Lemmatize(new_df, column)
+    
+    word_dict = Counter(lemmas)
+    
+    word_dict = dict(word_dict) 
+    
+    result = dict()
+    
+    for key, value in word_dict.items():    
+        if value > 500:
+            result[key] = value
+    
+    return result
+
 
 def Top10Lemmas(lemmatized: str) -> str:
     pass
@@ -110,7 +135,7 @@ if __name__ == '__main__':
     
     columns = ['mark', 'text_of_comment', 'num_of_words']
     
-    dataset_path = GetDataset()
+    dataset_path = GetDatasetPath()
     dataframe = GetDataframe(dataset_path)
     
     num_of_words = CountWords(dataframe, 'text_of_comment')
@@ -139,16 +164,15 @@ if __name__ == '__main__':
     print('Максимальное кол-во слов:', stat_1['max'])
     print('Среднее кол-во слов:', stat_1['mean'])
 
-    lemmatized = lemmatize(dataframe, columns[1])
-    
-    top10lemmas = Top10Lemmas(lemmatized)
+    lemmatized_class = LemmalizeClass(dataframe, columns[1], '2')
     
     fig = plt.figure(figsize=(20,10))
     ax = fig.add_subplot()
 
-    ax.bar(list(word_dict.keys()), word_dict.values(), color='r')
+    ax.bar(list(lemmatized_class.keys()), lemmatized_class.values(), color='g')
 
     plt.show()
+
 
     print("-"*99)
     
