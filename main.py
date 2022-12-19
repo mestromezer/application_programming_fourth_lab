@@ -42,16 +42,6 @@ def StatInfo(df: pd.DataFrame, column_name: str) -> pd.Series:
     """возвращает статистическую информацию о столбце"""
     return df[column_name].describe()
 
-def FilterClass(reviews_df: pd.DataFrame, column_name: str, class_name: str) -> pd.DataFrame:
-    """возвращает новый отфильтрованный по метке класса dataframe"""
-    result = pd.DataFrame(reviews_df[reviews_df[column_name] == class_name])
-    return result
-
-def FilterWords(reviews_df: pd.DataFrame, column_name: str, count: int) -> pd.DataFrame:
-    """возвращает новый отфильтрованный по кол-вам слов dataframe"""
-    result = pd.DataFrame(reviews_df[reviews_df[column_name] <= count])
-    return result
-
 def CountWords(df: pd.DataFrame, column: str) -> list:
     """возвращает список с кол-вом слов в каждом отзыве"""
     count_words = []
@@ -97,15 +87,17 @@ def Lemmatize(df: pd.DataFrame, column: str):
     m = Mystem()
     lemmas = m.lemmatize(text_nomalized)
     
-    functors_pos = {'INTJ', 'PRCL', 'CONJ', 'PREP', 'NPRO'}  # function words
+    functors_pos = {'ADJF'}  # function words
     
-    lemmas = [lemma for lemma in lemmas if pos(lemma) not in functors_pos]
+    lemmas = [lemma for lemma in lemmas if pos(lemma) in functors_pos]
+    
+    print(lemmas)
     
     lemmas = ClearWords(lemmas)
     
-    lemmas_res = [lemma for lemma in lemmas if not lemma == '' ]
+    #lemmas_res = [lemma for lemma in lemmas if not lemma == '' ]
     
-    return lemmas_res
+    return lemmas
     
 def LemmalizeClass(df: pd.DataFrame, column: str, mark: str) -> str:
     
@@ -145,26 +137,24 @@ if __name__ == '__main__':
     dataframe[columns[2]] = pd.Series(num_of_words)
     print(dataframe)
     
-    stat = StatInfo(dataframe, columns[2])
+    stat = dataframe[columns[2]].describe()
     print(stat)
     
-    df_words_filtered = FilterWords(
-        dataframe, columns[2], 100)
+    df_words_filtered = pd.DataFrame(dataframe[dataframe[columns[2]] <= 100])
     
     print(df_words_filtered)
     
-    df_1 = FilterClass(
-        dataframe, columns[0], '1')
+    df_1 = pd.DataFrame(dataframe[dataframe[columns[0]] == '1'])
     
     print(df_1)
 
-    stat_1 = StatInfo(df_1, columns[2])
+    stat_1 = df_1[columns[2]].describe()
     print('\nДля оценки 1:\n')
     print('Минимальное кол-во слов:', stat_1['min'])
     print('Максимальное кол-во слов:', stat_1['max'])
     print('Среднее кол-во слов:', stat_1['mean'])
 
-    lemmatized_class = LemmalizeClass(dataframe, columns[1], '2')
+    lemmatized_class = LemmalizeClass(dataframe, columns[1], '1')
     
     fig = plt.figure(figsize=(20,10))
     ax = fig.add_subplot()
